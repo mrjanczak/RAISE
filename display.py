@@ -28,17 +28,16 @@ VIB = 0.3
 
 thrust_modes =['TO', 'CLB', 'CRZ', 'GA', 'CON']
 
-panels = [  {'title':'N1',         'val':N1, 'type':'gauge', 'scale':[.5, 200, 210], 'div':20}, 
-            {'title':'EGT',        'val':EGT,'type':'gauge', 'scale':[4.5, 195, 200, 210]}, 
-            {'title':'N2',         'val':N2, 'type':'gauge', 'scale':[.5, 200, 210]}, 
-            {'title':'FF',         'val':FF, 'type':'value', 'scale':[1]}, 
-            {'title':'OIL\nPRESS', 'val':OP, 'type':'level', 'scale':[105, 106]},
-            {'title':'OIL\nTEMP',  'val':OT, 'type':'level'}, 
-            {'title':'OIL QTY %',  'val':OQ, 'type':'value'}, 
-            {'title':'VIB',        'val':VIB,'type':'level'},
+panels = [  {'title':'N1',         'val':N1, 'type':'gauge', 'scale':.5, 'NOR':(0, 200), 'ULT':210, 'div':20}, 
+            {'title':'EGT',        'val':EGT,'type':'gauge', 'scale':4.5,'NOR':(0, 195), 'LIM':(200, 210), 'ULT':210}, 
+            {'title':'N2',         'val':N2, 'type':'gauge', 'scale':.5, 'NOR':(0, 200), 'ULT':210}, 
+            {'title':'FF',         'val':FF, 'type':'value', 'scale':1}, 
+            {'title':'OIL\nPRESS', 'val':OP, 'type':'level', 'scale':1, },
+            {'title':'OIL\nTEMP',  'val':OT, 'type':'level', 'scale':1, }, 
+            {'title':'OIL QTY %',  'val':OQ, 'type':'value', 'scale':1, },
+            {'title':'VIB',        'val':VIB,'type':'level', 'scale':1, 'div':4},
             ]
 values = [N1, EGT, N2, OP, OT, OQ, VIB]
-ref_values = [100, 1000, 100, 1, 100, 100, 100, 4]
 shape = []
 
 x0 = 0
@@ -76,11 +75,19 @@ for p, panel in enumerate(panels):
                                 align = 'right', anchor_x = 'right', anchor_y = 'bottom', multiline = False))
 
     if type_ == 'gauge':
-        ref_scale = -math.pi/180*200
-        scale_deg = ref_scale * panel['scale']/panel['ref']
-        val_deg =   ref_scale * val/panel['ref']
+        rad = -math.pi/180
+        a0 = 0
+        da =   ref_scale * val/panel['scale']*rad
+        a1 = a0 + da
 
-        shape.append(shapes.Sector(xc, yc, r0,   segments = 20, angle = val_deg, color = gray, batch = batch))
+        # arrow & sector
+        shape.append(shapes.Sector(xc, yc, r0,   segments = 20, start_angle = a0, angle = da, color = gray, batch = batch))
+        r2 = r0 + 10
+        x1, y1 = xc, yc
+        x2, y2 = r2*math.cos(a1)+xc, r2*math.sin(a1)+yc
+        shape.append(shapes.Line(x1, y1, x2, y2, width = 3, color = wh, batch = batch))    
+
+        # Normal scale
         shape.append(shapes.Arc(   xc, yc, r0,   segments = 20, angle = scale_deg, color = wh, batch = batch))
         shape.append(shapes.Arc(   xc, yc, r0-1, segments = 20, angle = scale_deg, color = wh, batch = batch))
 
@@ -103,7 +110,7 @@ for p, panel in enumerate(panels):
         if 'LIM' in panel:
                 a = ref_scale * panel['LIM']/panel['ref']
                 r1 = r0-2
-                r2 = r0+10
+                r2 = r0+10d
                 x1, y1 = r1*math.cos(a) + xc, r1 * math.sin(a)+yc
                 x2, y2 = r2*math.cos(a) + xc, r2 * math.sin(a)+yc
                 shape.append(shapes.Line(x1, y1, x2, y2, width = 2, color = yel, batch = batch))
@@ -116,12 +123,7 @@ for p, panel in enumerate(panels):
                 x2, y2 = r2*math.cos(a) + xc, r2 * math.sin(a)+yc
                 shape.append(shapes.Line(x1, y1, x2, y2, width = 2, color = red, batch = batch))
 
-        # arrow
-        a = val_deg
-        r2 = r0 + 10
-        x1, y1 = xc, yc
-        x2, y2 = r2*math.cos(a)+xc, r2*math.sin(a)+yc
-        shape.append(shapes.Line(x1, y1, x2, y2, width = 3, color = wh, batch = batch))
+
 
     elif type_ == 'level':
         x1, y1 = x0 + 200, y0
