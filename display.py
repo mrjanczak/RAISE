@@ -309,7 +309,7 @@ def on_key_press(symbol, modifiers):
         OGV += 10
     if symbol == key.E:
         OGV -= 10
-    OGV = np.interp(OGV, [-OGV_MAX,OGV_MAX],[OGV_MAX,OGV_MAX]) 
+    OGV = np.interp(OGV, [-OGV_MAX,OGV_MAX],[-OGV_MAX,OGV_MAX]) 
 
     if symbol == key._4:
         FF += 20
@@ -322,7 +322,7 @@ def on_key_press(symbol, modifiers):
         FPAS += 10
     if symbol == key.T:
         FPAS -= 10
-    FPAS = np.interp(FPAS, [-FPAS_MAX,FPAS_MAX],[FPAS_MAX,FPAS_MAX]) 
+    FPAS = np.interp(FPAS, [-FPAS_MAX,FPAS_MAX],[-FPAS_MAX,FPAS_MAX]) 
 
     if symbol == key._6:
         VBV += 20
