@@ -116,9 +116,9 @@ VSV, VSV_MAX, VSV_STEP = 0.0, 30., 10.
 ACC, ACC_MAX, ACC_STEP = 0.0, 30., 10.
 TAT = 20
 
-# font1 = 'PibotoCondensed'
-font1 = 'RobotoCondensed'
-locked = False
+font1 = 'PibotoCondensed' # RasPi
+# font1 = 'RobotoCondensed' # Windows
+locked = True
 pin = '061023'
 pin_ = ''
 header_msg = 'Panel locked'
