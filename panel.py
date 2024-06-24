@@ -41,7 +41,7 @@ OGV_MOTOR = 1
 N1_MOTOR = 2
 N2_MOTOR = 3
 
-motors = [Motor('A') , Motor('B'),  Motor('C'), Motor('D')]
+# motors = [Motor('A') , Motor('B'),  Motor('C'), Motor('D')]
 ratios = [1, 24*20/12, 1, 1]
 direction = [1,1,-1,1]
 step = [0,360*2,0,0]
