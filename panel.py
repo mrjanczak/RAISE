@@ -5,6 +5,9 @@
 # Control by mouse and keyboard
 # (C) Michal Janczak, Poland 2024
 
+# Install buildhat:  sudo apt install python3-build-hat
+# Enable Serial port in Raspberry preferences > configuration
+
 import math
 import numpy as np
 import pygame
