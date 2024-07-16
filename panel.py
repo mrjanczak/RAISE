@@ -5,15 +5,25 @@
 # Control by mouse and keyboard
 # (C) Michal Janczak, Poland 2024
 
-# Install buildhat:  sudo apt install python3-build-hat
-# Enable Serial port in Raspberry preferences > configuration
+# 0. Prepare Raspberry Pi image Raspberry Pi OS with desktop (64-bit)
+# 1. Install buildhat:  sudo apt install python3-build-hat
+# 2. Enable Serial port in Raspberry preferences > configuration
+# 3. Download panel.py on desktop
+# 4. Run sudo nano /etc/xdg/autostart/display.desktop and paste:
+#    Desktop Entry]
+#    Name=RisePanel
+#    Exec=/usr/bin/python3 /home/admin/Desktop/panel.py
+# 5. Reboot
+
+from time import sleep
+print('RISE control panel initiation...')
+sleep(1)
 
 import math
 import numpy as np
 import pygame
 import pygame.gfxdraw
 from datetime import datetime
-from time import sleep
 
 verbose = False
 
@@ -23,7 +33,7 @@ try:
 
     motors = [Motor('A') , Motor('B'),  Motor('C'), Motor('D')]
 
-except FileNotFoundError:
+except:
     
     class Motor():
         def __init__(self, port):
