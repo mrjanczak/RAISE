@@ -8,11 +8,11 @@
 # 0. Prepare Raspberry Pi image Raspberry Pi OS with desktop (64-bit)
 # 1. Install buildhat:  sudo apt install python3-build-hat
 # 2. Enable Serial port in Raspberry preferences > configuration
-# 3. Download panel.py on desktop
+# 3. In admin/ folder run `git clone https://github.com/mrjanczak/RAISE.git`
 # 4. Run sudo nano /etc/xdg/autostart/display.desktop and paste:
 #    Desktop Entry]
 #    Name=RisePanel
-#    Exec=/usr/bin/python3 /home/admin/Desktop/panel.py
+#    Exec=/usr/bin/python3 /home/admin/RAISE/panel.py
 # 5. Reboot
 
 from time import sleep
@@ -21,6 +21,7 @@ sleep(1)
 
 import math
 import numpy as np
+import os
 import pygame
 import pygame.gfxdraw
 from datetime import datetime
@@ -30,11 +31,86 @@ verbose = False
 # Initiate servos
 try:
     from buildhat import Motor
-
     motors = [Motor('A') , Motor('B'),  Motor('C'), Motor('D')]
 
-except:
-    
+    import smbus2
+    class PCA9685:
+
+    # Registers/etc.
+    __SUBADR1            = 0x02
+    __SUBADR2            = 0x03
+    __SUBADR3            = 0x04
+    __MODE1              = 0x00
+    __PRESCALE           = 0xFE
+    __LED0_ON_L          = 0x06
+    __LED0_ON_H          = 0x07
+    __LED0_OFF_L         = 0x08
+    __LED0_OFF_H         = 0x09
+    __ALLLED_ON_L        = 0xFA
+    __ALLLED_ON_H        = 0xFB
+    __ALLLED_OFF_L       = 0xFC
+    __ALLLED_OFF_H       = 0xFD
+
+    def __init__(self, address=0x40, debug=False):
+        self.bus = smbus2.SMBus(1)
+        self.address = address
+        self.debug = debug
+        if (self.debug):
+        print("Reseting PCA9685")
+        self.write(self.__MODE1, 0x00)
+        
+    def write(self, reg, value):
+        "Writes an 8-bit value to the specified register/address"
+        self.bus.write_byte_data(self.address, reg, value)
+        if (self.debug):
+        print("I2C: Write 0x%02X to register 0x%02X" % (value, reg))
+        
+    def read(self, reg):
+        "Read an unsigned byte from the I2C device"
+        result = self.bus.read_byte_data(self.address, reg)
+        if (self.debug):
+        print("I2C: Device 0x%02X returned 0x%02X from reg 0x%02X" % (self.address, result & 0xFF, reg))
+        return result
+        
+    def setPWMFreq(self, freq):
+        "Sets the PWM frequency"
+        prescaleval = 25000000.0    # 25MHz
+        prescaleval /= 4096.0       # 12-bit
+        prescaleval /= float(freq)
+        prescaleval -= 1.0
+        if (self.debug):
+        print("Setting PWM frequency to %d Hz" % freq)
+        print("Estimated pre-scale: %d" % prescaleval)
+        prescale = math.floor(prescaleval + 0.5)
+        if (self.debug):
+        print("Final pre-scale: %d" % prescale)
+
+        oldmode = self.read(self.__MODE1);
+        newmode = (oldmode & 0x7F) | 0x10        # sleep
+        self.write(self.__MODE1, newmode)        # go to sleep
+        self.write(self.__PRESCALE, int(math.floor(prescale)))
+        self.write(self.__MODE1, oldmode)
+        time.sleep(0.005)
+        self.write(self.__MODE1, oldmode | 0x80)
+
+    def setPWM(self, channel, on, off):
+        "Sets a single PWM channel"
+        self.write(self.__LED0_ON_L+4*channel, on & 0xFF)
+        self.write(self.__LED0_ON_H+4*channel, on >> 8)
+        self.write(self.__LED0_OFF_L+4*channel, off & 0xFF)
+        self.write(self.__LED0_OFF_H+4*channel, off >> 8)
+        if (self.debug):
+        print("channel: %d  LED_ON: %d LED_OFF: %d" % (channel,on,off))
+        
+    def setServoPulse(self, channel, pulse):
+        "Sets the Servo Pulse,The PWM frequency must be 50HZ"
+        pulse = pulse*4096/20000        #PWM frequency is 50HZ,the period is 20000us
+        self.setPWM(channel, 0, int(pulse))
+
+    pwm = PCA9685(0x40, debug=False)
+    pwm.setPWMFreq(50)
+
+except:    
     class Motor():
         def __init__(self, port):
             pass
@@ -44,9 +120,18 @@ except:
             pass  
         def  run_for_degrees(self, degrees):
             pass
-
     motors = [Motor('A') , Motor('B'),  Motor('C'), Motor('D')]
-    print('Servos not found!')
+    print('LEGO Servos HAT not found!')
+
+    class PCA9685:
+        def __init__(self, address=0x40, debug=False):
+            pass
+        def setPWMFreq(self, freq):
+            pass
+        def setServoPulse(self, channel, pulse):
+            pass
+    pwm = PCA9685(0x40, debug=False)
+    print('PCA9685 Servo Driver HAT not found!')
 
 # Motors
 PUMP_MOTOR = 0
@@ -129,12 +214,20 @@ VSV, VSV_MAX, VSV_STEP = 0.0, 30., 10.
 ACC, ACC_MAX, ACC_STEP = 0.0, 30., 10.
 TAT = 20
 
-font1 = 'PibotoCondensed' # RasPi
-# font1 = 'RobotoCondensed' # Windows
-locked = True
-pin = '061023'
+if os.name == 'nt':
+    font1 = 'RobotoCondensed' # Windows
+    locked = False
+else:
+    font1 = 'PibotoCondensed' # RasPi
+    locked = True
+
+if locked:
+    header_msg = 'Panel locked'
+else:
+    header_msg = ''
+
+pin = '0610'
 pin_ = ''
-header_msg = 'Panel locked'
 click_rects = {}
 timer = datetime.now()
 det_lab, det_N1 = '', ''
